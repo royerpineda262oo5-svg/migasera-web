@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Gasera — Gestión de estaciones de Gas LP</title>
+<meta name="description" content="Sistema que automatiza la operación de estaciones de Gas LP: cortes, arqueo, litros, eficiencia y créditos en un solo lugar. Agenda tu demo por WhatsApp.">
+<meta property="og:title" content="Mi Gasera — Que no se te vaya ni un litro">
+<meta property="og:description" content="Cortes por viaje, secuencia de totalizadores, arqueo, eficiencia y créditos en un solo lugar. Detecta faltantes de litros y de dinero.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0F2A47">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2300A5B5'/%3E%3Crect x='12' y='14' width='40' height='7' rx='1.5' fill='%23fff'/%3E%3Crect x='12' y='43' width='40' height='7' rx='1.5' fill='%23fff'/%3E%3Crect x='16' y='20' width='6' height='24' fill='%23fff'/%3E%3Crect x='42' y='20' width='6' height='24' fill='%23fff'/%3E%3Crect x='25' y='27' width='14' height='10' rx='5' fill='%230F2A47'/%3E%3Ccircle cx='32' cy='32' r='2.6' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F2A47; --navy-2:#173A60; --navy-hi:#24527D;
+  --tq:#00A5B5; --tq-hover:#00808D;
+  --ok:#16A34A; --warn:#EAB308; --err:#DC2626;
+  --paper:#F4F6F8; --line:#D9E1E8; --muted:#5A6B7A; --ink:#0F2A47;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Archivo',system-ui,sans-serif;color:var(--ink);background:#fff;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* Botones — regla de marca: nunca texto blanco sobre turquesa */
+.btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:16px;padding:14px 22px;border-radius:999px;transition:.18s;border:2px solid transparent;cursor:pointer}
+.btn-tq{background:var(--tq);color:var(--navy)}
+.btn-tq:hover{background:#19B9C8;transform:translateY(-1px)}
+.btn-ghost{border-color:rgba(255,255,255,.35);color:#fff}
+.btn-ghost:hover{border-color:#fff}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{background:var(--navy-hi)}
+.btn svg{width:20px;height:20px;flex:none}
+
+/* Header */
+header{position:sticky;top:0;z-index:20;background:rgba(15,42,71,.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+.brand{display:flex;align-items:center;gap:12px;color:#fff}
+.brand svg{width:34px;height:30px}
+.brand b{font-size:22px;letter-spacing:-.3px}
+.brand b span{font-weight:500}
+.brand small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2.5px;color:#8FB0C9;margin-top:-2px}
+.links{display:flex;gap:28px;align-items:center}
+.links a{color:#C9D7E3;font-weight:500;font-size:15px}
+.links a:hover{color:#fff}
+.links .btn{padding:10px 18px;font-size:15px}
+
+/* Hero */
+.hero{background:
+  radial-gradient(ellipse 60% 70% at 75% 40%, rgba(0,165,181,.22), transparent 70%),
+  linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/48px 48px,
+  linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/48px 48px,
+  var(--navy);color:#fff;padding:72px 0 88px;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2.5px;color:var(--tq);text-transform:uppercase;margin-bottom:18px}
+h1{font-size:clamp(36px,5.2vw,58px);line-height:1.06;font-weight:800;letter-spacing:-1.2px}
+h1 em{font-style:normal;color:var(--tq)}
+.lead{font-size:clamp(17px,2vw,20px);color:#C9D7E3;margin:22px 0 32px;max-width:540px}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap}
+.trust{display:flex;gap:22px;flex-wrap:wrap;margin-top:34px;color:#9FB7CB;font-size:14px}
+.trust span{display:flex;align-items:center;gap:8px}
+.trust span::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tq)}
+
+/* Mock del tablero */
+.mock{background:#fff;color:var(--ink);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;transform:rotate(-1deg)}
+.mock-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--paper);border-bottom:1px solid var(--line)}
+.mock-top b{font-size:14px}
+.mock-top .mono{font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:6px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.mock-body{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+.kpi strong{display:block;font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;margin-top:4px}
+.kpi .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:6px}
+.tag.ok{background:#DCFCE7;color:#166534}.tag.warn{background:#FEF9C3;color:#854D0E}.tag.err{background:#FEE2E2;color:#991B1B}
+.kpi.wide{grid-column:1/-1}
+.bars{display:flex;align-items:flex-end;gap:8px;height:70px;margin-top:10px}
+.bars i{flex:1;background:var(--navy-hi);border-radius:4px 4px 0 0;opacity:.85}
+.bars i.hl{background:var(--tq);opacity:1}
+.rows{margin-top:8px;font-size:13px}
+.rows div{display:flex;justify-content:space-between;padding:7px 0;border-top:1px dashed var(--line)}
+.rows div:first-child{border-top:0}
+.rows .mono{font-size:13px}
+.mock-note{font-size:11px;color:var(--muted);text-align:center;padding:0 0 12px}
+
+/* Secciones */
+section{padding:88px 0}
+.sec-head{max-width:680px;margin-bottom:44px}
+.sec-head .eyebrow{color:var(--tq-hover)}
+h2{font-size:clamp(28px,3.6vw,40px);line-height:1.12;font-weight:800;letter-spacing:-.8px}
+.sec-head p{color:var(--muted);font-size:18px;margin-top:14px}
+
+/* Dolor */
+.pain{background:var(--paper)}
+.pain-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pain-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.pain-card .q{font-size:30px;line-height:1;color:var(--err);font-weight:800}
+.pain-card p{margin-top:10px;font-weight:600}
+.pain-card span{display:block;margin-top:6px;color:var(--muted);font-size:14px;font-weight:400}
+
+/* Funciones */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{border:1px solid var(--line);border-radius:var(--radius);padding:26px;transition:.18s;background:#fff}
+.feat:hover{border-color:var(--tq);box-shadow:0 10px 30px rgba(15,42,71,.08);transform:translateY(-2px)}
+.ico{width:46px;height:46px;border-radius:12px;background:#E6F6F8;display:grid;place-items:center;margin-bottom:16px}
+.ico svg{width:24px;height:24px;stroke:var(--navy);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.feat h3{font-size:19px;font-weight:700}
+.feat p{color:var(--muted);margin-top:8px;font-size:15.5px}
+
+/* Resultado */
+.result{background:var(--navy);color:#fff}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.stat{border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:28px;background:rgba(255,255,255,.03)}
+.stat strong{display:block;font-size:34px;line-height:1.15;font-weight:800;letter-spacing:-1px;color:var(--tq)}
+.stat p{color:#C9D7E3;margin-top:6px}
+.result .sec-head p{color:#9FB7CB}
+
+/* Pasos */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:s}
+.step{position:relative;padding:26px;border-radius:var(--radius);background:var(--paper)}
+.step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;margin-bottom:14px}
+.step h3{font-size:18px}
+.step p{color:var(--muted);font-size:15px;margin-top:6px}
+
+/* Confianza */
+.promise-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:22px}
+.box{border-radius:var(--radius);padding:30px;border:1px solid var(--line)}
+.box h3{font-size:22px;margin-bottom:12px}
+.box ul{list-style:none;display:grid;gap:12px}
+.box li{display:flex;gap:12px;align-items:flex-start}
+.box li::before{content:"";flex:none;width:20px;height:20px;margin-top:2px;border-radius:50%;background:#DCFCE7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.5l3 3 7-7' fill='none' stroke='%2316A34A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat}
+.box.alt{background:var(--paper)}
+.box.alt p{color:var(--muted)}
+.box.alt p+p{margin-top:12px}
+
+/* FAQ */
+.faq{background:var(--paper)}
+.faq-list{max-width:820px;display:grid;gap:12px}
+details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 22px}
+summary{cursor:pointer;font-weight:700;font-size:17px;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:24px;line-height:1;color:var(--tq-hover);transition:.2s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{color:var(--muted);margin-top:10px}
+
+/* CTA final */
+.final{background:
+  radial-gradient(ellipse 50% 80% at 50% 0%, rgba(0,165,181,.25), transparent 70%), var(--navy);color:#fff;text-align:center}
+.final h2{max-width:720px;margin:0 auto}
+.final p{color:#C9D7E3;font-size:18px;margin:16px auto 30px;max-width:560px}
+
+footer{background:#0A1F36;color:#8FA6BA;padding:34px 0;font-size:14px}
+.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+.foot a:hover{color:#fff}
+
+/* WhatsApp flotante */
+.wa-float{position:fixed;right:18px;bottom:18px;z-index:30;width:58px;height:58px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 10px 25px rgba(0,0,0,.25);transition:.18s}
+.wa-float:hover{transform:scale(1.06)}
+.wa-float svg{width:30px;height:30px;fill:#fff}
+
+.micro{margin-top:14px;font-size:14px;color:#9FB7CB}
+.video-wrap{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 20px 50px rgba(15,42,71,.18);max-width:900px}
+.video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.chips{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:6px auto 0;max-width:760px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:14px 20px;border-radius:999px;border:2px solid rgba(255,255,255,.25);color:#fff;font-weight:700;font-size:16px;transition:.18s}
+.chip:hover{border-color:var(--tq);background:rgba(0,165,181,.12)}
+.chip b{color:var(--tq)}
+.final .or{color:#9FB7CB;font-size:15px;margin:26px 0 14px}
+
+/* Responsive */
+@media (max-width:960px){
+  .hero-grid{grid-template-columns:1fr;gap:48px}
+  .mock{transform:none;max-width:520px}
+  .pain-grid{grid-template-columns:1fr 1fr}
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .steps{grid-template-columns:1fr 1fr}
+  .promise-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .links a:not(.btn){display:none}
+  .brand small{display:none}
+  .hero{padding:48px 0 64px}
+  section{padding:64px 0}
+  .pain-grid,.feat-grid,.steps,.result-grid{grid-template-columns:1fr}
+  .btn{width:100%;justify-content:center}
+  .links .btn{width:auto}
+  .mock-body{grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+  .kpi strong{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== ENCABEZADO ===================== -->
+<header>
+  <div class="wrap nav">
+    <a href="#" class="brand" aria-label="Mi Gasera, inicio">
+      <svg viewBox="0 0 166 141" aria-hidden="true">
+        <rect x="0" y="0" width="166" height="28" rx="4" fill="#fff"/>
+        <rect x="0" y="113" width="166" height="28" rx="4" fill="#fff"/>
+        <rect x="15" y="26" width="27" height="89" fill="#fff"/>
+        <rect x="124" y="26" width="27" height="89" fill="#fff"/>
+        <rect x="50" y="50" width="66" height="44" rx="22" fill="#00A5B5"/>
+        <circle cx="83" cy="72" r="11" fill="#0F2A47"/>
+      </svg>
+      <div><b><span>Mi</span> Gasera</b><small>GESTIÓN DE ESTACIONES LP</small></div>
+    </a>
+    <nav class="links">
+      <a href="#funciones">Qué hace</a>
+      <a href="#como">Cómo empezar</a>
+      <a href="#preguntas">Preguntas</a>
+      <a class="btn btn-tq wa-link" href="#">Agenda tu demo</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Control total de tu estación de Gas LP</div>
+      <h1>Que no se te vaya <em>ni un litro.</em></h1>
+      <p class="lead">Mi Gasera <b style="color:#fff">automatiza tus cortes por viaje</b>, revisa la secuencia de totalizadores y te marca los faltantes de litros y de dinero. Tus trabajadores capturan desde el celular; tú lo ves todo desde el tuyo.</p>
+      <div class="cta-row">
+        <a class="btn btn-tq wa-link" href="#">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg>
+          Agenda tu demo por WhatsApp
+        </a>
+        <a class="btn btn-ghost" href="#funciones">Ver qué hace</a>
+      </div>
+      <p class="micro">Te contesta una persona, no un bot. Demo sin compromiso.</p>
+      <div class="trust">
+        <span>Probado en operación diaria en Hidalgo</span>
+        <span>Funcionando en una semana</span>
+        <span>Garantía de 30 días · mes a mes</span>
+      </div>
+    </div>
+
+    <div class="mock" aria-label="Ejemplo del tablero del dueño">
+      <div class="mock-top">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <b>Tablero del dueño</b>
+        <span class="mono">Hoy · 19:40</span>
+      </div>
+      <div class="mock-body">
+        <div class="kpi"><small>Litros vendidos hoy</small><strong>8,412</strong><span class="tag ok">Corte cuadrado</span></div>
+        <div class="kpi"><small>Eficiencia promedio</small><strong>98.6 %</strong><span class="tag warn">Pipa 2 · revisar</span></div>
+        <div class="kpi wide">
+          <small>Litros por día · últimos 7 días</small>
+          <div class="bars"><i style="height:55%"></i><i style="height:72%"></i><i style="height:64%"></i><i style="height:80%"></i><i style="height:69%"></i><i style="height:88%"></i><i class="hl" style="height:76%"></i></div>
+        </div>
+        <div class="kpi wide">
+          <small>Créditos por cobrar</small>
+          <div class="rows">
+            <div><span>Restaurante El Portal</span><span class="mono">$12,480</span></div>
+            <div><span>Tortillería San José</span><span class="mono">$6,930</span></div>
+            <div><span>Totalizador U3</span><span class="tag err" style="margin:0">No coincide</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-note">Datos de ejemplo</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DOLOR ===================== -->
+<section class="pain">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">¿Te suena?</div>
+      <h2>Si llevas tu estación en libretas y Excel, esto ya te pasó.</h2>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card"><div class="q">?</div><p>Hay faltantes de litros<span>y nadie sabe en qué corte ni en qué unidad se fue la diferencia.</span></p></div>
+      <div class="pain-card"><div class="q">?</div><p>El corte de cada viaje tarda horas<span>sumando tickets, totalizadores y efectivo a mano.</span></p></div>
+      <div class="pain-card"><div class="q">?</div><p>Los créditos se pierden<span>y te enteras de cuánto te deben hasta que ya es tarde.</span></p></div>
+      <div class="pain-card"><div class="q">?</div><p>No sabes cuánto dejó cada viaje<span>hasta que alguien, días después, te arma el reporte.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VIDEO ===================== -->
+<section id="video" style="padding-bottom:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Míralo funcionando</div>
+      <h2>Así se ve un corte con Mi Gasera.</h2>
+    </div>
+    <div class="video-wrap" id="video-frame"></div>
+  </div>
+</section>
+
+<!-- ===================== FUNCIONES ===================== -->
+<section id="funciones">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Qué hace Mi Gasera</div>
+      <h2>Todo lo que pasa en tu estación, ordenado y a la vista.</h2>
+      <p>Diseñado para estaciones de carburación, pipas y depósitos de Gas LP. Tus trabajadores capturan desde el celular; tú lo ves todo desde el tuyo.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
+        <h3>Corte por viaje automático</h3>
+        <p>Cada unidad captura desde el celular con su propia contraseña y folio automático. El corte de cada viaje se arma solo: litros, ventas, cobranza y pago a planta.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>Secuencia de totalizadores</h3>
+        <p>El sistema revisa que la lectura final de cada corte sea la inicial del siguiente, en todas tus unidades. Si se brincan litros, se marca en rojo.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/></svg></div>
+        <h3>Arqueo de efectivo</h3>
+        <p>Lo que se vendió contra lo que se entregó. Faltantes y sobrantes de dinero a la vista por unidad y por corte.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></div>
+        <h3>Eficiencia y merma</h3>
+        <p>Compara lo que entra contra lo que sale en cada estación, pipa y depósito. Detecta pérdidas antes de que se hagan grandes.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M17 11h5M19.5 8.5v5"/></svg></div>
+        <h3>Créditos y cobranza</h3>
+        <p>Deuda por cliente al día, descuentos por litro y control de abonos. Sabes quién te debe y cuánto.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 6h4M9 17l2-3 2 2 2-4"/></svg></div>
+        <h3>Tablero del dueño</h3>
+        <p>Litros, ventas y utilidad por día, semana y mes desde tu celular. Más aviso por correo cuando un depósito está bajo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RESULTADO ===================== -->
+<section class="result">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">El resultado</div>
+      <h2>Tu operación más eficiente: menos tiempo cuadrando, más control de tu dinero.</h2>
+      <p>El sistema hace solo las sumas, las comparaciones y los reportes que hoy alguien hace a mano. Diseñado específicamente para cómo se trabaja una estación de Gas LP en México.</p>
+    </div>
+    <div class="result-grid">
+      <div class="stat"><strong>Cada lectura</strong><p>de totalizador revisada en secuencia. Si un corte no empieza donde terminó el anterior, lo ves en rojo.</p></div>
+      <div class="stat"><strong>Cada viaje</strong><p>con su corte armado solo: litros, ventas, cobranza y pago a planta, sin sumar a mano.</p></div>
+      <div class="stat"><strong>1 semana</strong><p>para tenerlo funcionando con tu información y tu gente capacitada.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CÓMO EMPEZAR ===================== -->
+<section id="como">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Cómo empezar</div>
+      <h2>De la demo a operar, en cuatro pasos.</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Demo</h3><p>Me escribes por WhatsApp y te muestro el sistema funcionando, en persona o por videollamada.</p></div>
+      <div class="step"><h3>Configuración</h3><p>Damos de alta tus estaciones, pipas, depósitos, clientes y precios.</p></div>
+      <div class="step"><h3>Capacitación</h3><p>Enseñamos a tus trabajadores a capturar y a tu gerente a cerrar cada corte.</p></div>
+      <div class="step"><h3>Operación</h3><p>Empiezas a trabajar con el sistema. Soporte por WhatsApp cuando lo necesites.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONFIANZA ===================== -->
+<section style="padding-top:0">
+  <div class="wrap promise-grid">
+    <div class="box">
+      <h3>Sin riesgo para ti</h3>
+      <ul>
+        <li>Garantía de 30 días.</li>
+        <li>Renta mensual, sin contratos a plazo forzoso.</li>
+        <li>Tu información es tuya y se maneja con confidencialidad.</li>
+        <li>Funciona en celular, tablet o computadora. Sin instalar nada.</li>
+      </ul>
+    </div>
+    <div class="box alt">
+      <h3>Lo que no es</h3>
+      <p>Mi Gasera <b>no es un sistema fiscal</b>: no factura ni sustituye tu control volumétrico.</p>
+      <p>Es tu <b>control interno de operación</b>: lo que necesitas para saber cada día qué se vendió, qué se cobró y dónde se fue cada litro.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PREGUNTAS ===================== -->
+<section class="faq" id="preguntas">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Preguntas frecuentes</div>
+      <h2>Lo que más nos preguntan.</h2>
+    </div>
+    <div class="faq-list">
+      <details><summary>¿Cuánto cuesta?</summary><p>Depende de cuántas unidades operes (estaciones y pipas). Agenda tu demo por WhatsApp y te damos una propuesta a la medida de tu operación.</p></details>
+      <details><summary>¿Sirve si tengo pipas y no solo estación?</summary><p>Sí. Cada estación y cada pipa se manejan como unidades con su propio corte, su contraseña y su eficiencia. Los depósitos también se controlan.</p></details>
+      <details><summary>¿Mis trabajadores necesitan computadora?</summary><p>No. Capturan desde su celular con una contraseña por unidad. Es sencillo y se aprende en una sesión.</p></details>
+      <details><summary>¿Necesito cambiar mi facturación o mi control volumétrico?</summary><p>No. Mi Gasera no es fiscal y no toca tu facturación. Trabaja a un lado de lo que ya tienes.</p></details>
+      <details><summary>¿Cuánto tarda en estar funcionando?</summary><p>Normalmente una semana, desde que nos das tu información hasta que tu gente ya está capturando.</p></details>
+      <details><summary>¿Qué pasa si no me convence?</summary><p>Tienes 30 días de garantía y la renta es mes a mes. Sin plazos forzosos.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CTA FINAL ===================== -->
+<section class="final">
+  <div class="wrap">
+    <h2>Mira el sistema funcionando antes de decidir.</h2>
+    <p>Dinos cómo es tu operación y te mostramos el sistema con un ejemplo parecido al tuyo, en persona o por videollamada.</p>
+    <div class="chips">
+      <a class="chip wa-op" href="#" data-op="1 estación"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg> Tengo <b>1 estación</b></a>
+      <a class="chip wa-op" href="#" data-op="estación y pipas"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg> Tengo <b>estación y pipas</b></a>
+      <a class="chip wa-op" href="#" data-op="varias estaciones"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg> Tengo <b>varias estaciones</b></a>
+      <a class="chip wa-op" href="#" data-op="solo pipas"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg> Tengo <b>solo pipas</b></a>
+    </div>
+    <div class="or">o simplemente</div>
+    <a class="btn btn-tq wa-link" href="#">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg>
+      Agenda tu demo por WhatsApp
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span>© <span id="yr">2026</span> Mi Gasera™ · Gestión de estaciones LP · Hidalgo, México</span>
+    <a href="mailto:migasera.contacto@gmail.com">migasera.contacto@gmail.com</a>
+  </div>
+</footer>
+
+<a class="wa-float wa-link" href="#" aria-label="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.6-.3z"/></svg>
+</a>
+
+<script>
+/* =========================================================
+   ⚙️ ÚNICO DATO QUE SE CAMBIA
+   Pon aquí el WhatsApp 771 con 52 + 10 dígitos, sin espacios.
+   Ejemplo: '527711234567'
+   ========================================================= */
+const WHATSAPP = '52771XXXXXXX';
+const MENSAJE  = 'Hola, vi la página de Mi Gasera y me gustaría agendar una demo.';
+/* Cuando subas tu video a YouTube (puede ser "No listado"), pega aquí solo su ID.
+   Ej. de https://youtu.be/AbC123xYz → 'AbC123xYz'. Vacío = la sección no aparece. */
+const VIDEO_YOUTUBE = '';
+
+const url = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(MENSAJE);
+document.querySelectorAll('.wa-link').forEach(a => { a.href = url; a.target = '_blank'; a.rel = 'noopener'; });
+document.querySelectorAll('.wa-op').forEach(a => {
+  const t = 'Hola, vi la página de Mi Gasera. Tengo ' + a.dataset.op + ' y me gustaría ver una demo.';
+  a.href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(t); a.target = '_blank'; a.rel = 'noopener';
+});
+// Video: si VIDEO_YOUTUBE tiene un ID, se muestra la sección; si está vacío, se oculta.
+const vs = document.getElementById('video');
+if (VIDEO_YOUTUBE) {
+  document.getElementById('video-frame').innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + VIDEO_YOUTUBE + '?rel=0" title="Mi Gasera funcionando" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
+} else { vs.style.display = 'none'; }
+document.getElementById('yr').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
